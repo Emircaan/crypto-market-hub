@@ -1,0 +1,53 @@
+syntax = "proto3";
+
+package cryptomarket;
+
+option go_package = "github.com/Emircaan/crypto-service/internal/generated/proto/cryptomarket";
+
+service CryptoMarketService {
+  rpc FetchTickers (FetchTickersRequest) returns (FetchTickersResponse);
+  
+  rpc GetSupportedExchanges (Empty) returns (SupportedExchangesResponse);
+  
+  rpc HealthCheck (Empty) returns (HealthCheckResponse);
+}
+
+message Empty {}
+
+message FetchTickersRequest {
+  string exchange = 1;
+  repeated string symbols = 2;
+  Credentials credentials = 3;
+}
+
+message Credentials {
+  string api_key = 1;
+  string api_secret = 2;
+  string passphrase = 3;
+}
+
+message FetchTickersResponse {
+  bool success = 1;
+  string error_message = 2;
+  repeated Ticker tickers = 3;
+}
+
+message Ticker {
+  string exchange = 1;
+  string symbol = 2;
+  double price = 3;
+  double volume = 4;
+  double high = 5;
+  double low = 6;
+  double change_percent = 7;
+  int64 timestamp = 8;
+}
+
+message SupportedExchangesResponse {
+  repeated string exchanges = 1;
+}
+
+message HealthCheckResponse {
+  bool healthy = 1;
+  string version = 2;
+}

@@ -1,0 +1,92 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: crypto-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: crypto_exchange
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - crypto-network
+
+  vault:
+    image: hashicorp/vault:1.15
+    container_name: crypto-vault
+    ports:
+      - "8200:8200"
+    environment:
+      VAULT_DEV_ROOT_TOKEN_ID: "dev-root-token"
+      VAULT_DEV_LISTEN_ADDRESS: "0.0.0.0:8200"
+    cap_add:
+      - IPC_LOCK
+    command: server -dev
+    networks:
+      - crypto-network
+
+  ccxt-server:
+    build:
+      context: ./backend/ccxt-server
+      dockerfile: Dockerfile
+    container_name: crypto-ccxt-server
+    ports:
+      - "50052:50052"
+    networks:
+      - crypto-network
+
+  crypto-server:
+    build:
+      context: ./backend/crypto-server
+      dockerfile: Dockerfile
+    container_name: crypto-server
+    ports:
+      - "3000:3000"
+    environment:
+      PORT: "3000"
+      GRPC_SERVER_ADDR: "ccxt-server:50052"
+      VAULT_ADDR: "http://vault:8200"
+      VAULT_TOKEN: "dev-root-token"
+      DB_HOST: "postgres"
+      DB_PORT: "5432"
+      DB_USER: "postgres"
+      DB_PASSWORD: "postgres"
+      DB_NAME: "crypto_exchange"
+      DB_SSLMODE: "disable"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      ccxt-server:
+        condition: service_started
+      vault:
+        condition: service_started
+    networks:
+      - crypto-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: crypto-frontend
+    ports:
+      - "3001:3000"
+    environment:
+      NEXT_PUBLIC_API_URL: "http://localhost:3000"
+    depends_on:
+      - crypto-server
+    networks:
+      - crypto-network
+
+volumes:
+  postgres-data:
+
+networks:
+  crypto-network:
+    driver: bridge
