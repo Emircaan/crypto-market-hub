@@ -14,7 +14,7 @@ FROM alpine:latest
 WORKDIR /app
 
 COPY --from=builder /crypto-server .
-COPY db/migration ./db/migration
+
 
 EXPOSE 3000
 

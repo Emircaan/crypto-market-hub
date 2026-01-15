@@ -20,7 +20,7 @@ sqlc-gen:
 
 # Run database migrations
 migrate:
-	@PGPASSWORD=postgres psql -h localhost -U postgres -d crypto_exchange -f backend/crypto-server/db/migration/000001_init_schema.up.sql
+	@PGPASSWORD=postgres psql -h localhost -U postgres -d crypto_exchange -f backend/crypto-server/internal/database/migrations/000001_init_schema.up.sql
 	@echo "✅ Migrations applied"
 
 # Start only PostgreSQL
